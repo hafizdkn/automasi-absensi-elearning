@@ -176,13 +176,13 @@ class Elearning(Notifikasi):
         # mencari tag terdapat kata Submit attendance dan mengambil url submit kehadiran
         url_submit_kehadiran = tree.xpath('//*[text()="Submit attendance"]//parent::a/@href')
         if len(url_submit_kehadiran) != 0:
-            format_pesan = f"Seperti nya url untuk submit absensi di pertemuan *{judul_pertemuan}*\n*Ditemukan!* mencoba mencari metode absensi..."
+            format_pesan = f"Url absensi dipertemuan *{judul_pertemuan}*\n*Ditemukan!* mencoba mencari metode absensi..."
             self.notif_wa(self.nomer_hp, format_pesan)
             status = self.cek_metode_absensi(url_submit_kehadiran, url_absensi)
             return status
 
         else:
-            format_pesan = f"Seperti nya url untuk submit absensi di pertemuan *{judul_pertemuan}*\n*Tidak ditemukan!*"
+            format_pesan = f"Url absensi dipertemuan *{judul_pertemuan}*\n*Tidak ditemukan!*"
             self.notif_wa(self.nomer_hp, format_pesan)
             return None
 
@@ -213,48 +213,54 @@ class Elearning(Notifikasi):
 
             # mencari tag label yg memiliki tag span dg kata Present,
             # kemudian naik ke tag input untuk mengambil nilai attribute value
-            status_value = tree.xpath('//label//span[text()="Present"]//preceding::input[1]/@value')[0]
+            for kata_kehadiran in ["Present", "Hadir"]:
+                status_value = tree.xpath(f'//label//span[text()="{kata_kehadiran}"]//preceding::input[1]/@value')
+                if len(status_value) != 0:
+                    status_value = status_value
 
-            # jika attribute id id_studentpassword ditemukan
-            # maka absensi membutuhkan password
-            if len(is_absensi_menggunakan_password) != 0:
-                payload = [
-                    ("sessid", sessid_value),
-                    ("sesskey", sesskey_value),
-                    ("sesskey", sesskey_value),
-                    ("studentpassword", "1234"),
-                    ("_qf__mod_attendance_student_attendance_form", "1"),
-                    ("mform_isexpanded_id_session", "1"),
-                    ("status", status_value),
-                    ("submitbutton", "Save changes"),
-                ]
-                self.session.post(url_submit, headers=header, data=payload)
+                    # jika attribute id id_studentpassword ditemukan
+                    # maka absensi membutuhkan password
+                    if len(is_absensi_menggunakan_password) != 0:
+                        payload = [
+                            ("sessid", sessid_value),
+                            ("sesskey", sesskey_value),
+                            ("sesskey", sesskey_value),
+                            ("studentpassword", "1234"),
+                            ("_qf__mod_attendance_student_attendance_form", "1"),
+                            ("mform_isexpanded_id_session", "1"),
+                            ("status", status_value),
+                            ("submitbutton", "Save changes"),
+                        ]
+                        self.session.post(url_submit, headers=header, data=payload)
 
-                format_pesan = "Metode absensi menggunakan password, mencoba absensi menggunakan password..."
-                self.notif_wa(self.nomer_hp_penerima, format_pesan)
+                        format_pesan = "Metode absensi menggunakan password, mencoba absensi menggunakan password..."
+                        self.notif_wa(self.nomer_hp, format_pesan)
 
-                format_pesan = f"Horaa... telah berhasil melakukan absensi,\nLebih lanjut {url_absensi}"
-                self.notif_wa(self.nomer_hp_penerima, format_pesan)
+                        format_pesan = f"Horaa... telah berhasil melakukan absensi,\nLebih lanjut {url_absensi}"
+                        self.notif_wa(self.nomer_hp, format_pesan)
+                        return True
 
-            else:
-                payload = [
-                    ("sessid", sessid_value),
-                    ("sesskey", sesskey_value),
-                    ("sesskey", sesskey_value),
-                    ("_qf__mod_attendance_student_attendance_form", "1"),
-                    ("mform_isexpanded_id_session", "1"),
-                    ("status", status_value),
-                    ("submitbutton", "Save changes"),
-                ]
-                self.session.post(url_submit, headers=header, data=payload)
+                    else:
+                        payload = [
+                            ("sessid", sessid_value),
+                            ("sesskey", sesskey_value),
+                            ("sesskey", sesskey_value),
+                            ("_qf__mod_attendance_student_attendance_form", "1"),
+                            ("mform_isexpanded_id_session", "1"),
+                            ("status", status_value),
+                            ("submitbutton", "Save changes"),
+                        ]
+                        print(status_value)
+                        print(url_submit)
+                        self.session.post(url_submit, headers=header, data=payload)
 
-                format_pesan = "Metode absensi tidak menggunakan password, mencoba untuk absensi..."
-                super().notif_wa(self.nomer_hp_penerima, format_pesan)
+                        format_pesan = "Metode absensi tidak menggunakan password, mencoba untuk absensi..."
+                        super().notif_wa(self.nomer_hp, format_pesan)
 
-                format_pesan = f"Horaa... telah berhasil melakukan absensi,\nLebih lanjut {url_absensi}"
-                super().notif_wa(self.nomer_hp_penerima, format_pesan)
-
-            return True
+                        format_pesan = f"Horaa... telah berhasil melakukan absensi,\nLebih lanjut {url_absensi}"
+                        super().notif_wa(self.nomer_hp, format_pesan)
+                        return True
+            print("Tidak ditemukan kata Present atau Hadir saat mau submit,cek ulang kata kehadiran dan informasikan ke admin untuk memperbaharui!")
 
 
 class JadwalMataKuliah(Elearning):
@@ -297,13 +303,14 @@ class JadwalMataKuliah(Elearning):
                     self.mencari_semua_url_pertemuan_dimatkul(url_matkul)
 
             elif self.hari_ini == "Wednesday":
-                list_url_matkul = ["", ""]
+                list_url_matkul = ["https://e-learning.asia.ac.id/course/view.php?id=341"]
                 for url_matkul in list_url_matkul:
                     self.ambil_nama_matkul(url_matkul)
                     self.mencari_semua_url_pertemuan_dimatkul(url_matkul)
 
             elif self.hari_ini == "Thursday":
-                list_url_matkul = ["", ""]
+                list_url_matkul = ["https://e-learning.asia.ac.id/course/view.php?id=374"]
+
                 for url_matkul in list_url_matkul:
                     self.ambil_nama_matkul(url_matkul)
                     self.mencari_semua_url_pertemuan_dimatkul(url_matkul)
@@ -313,7 +320,6 @@ class JadwalMataKuliah(Elearning):
                 for url_matkul in list_url_matkul:
                     self.ambil_nama_matkul(url_matkul)
                     self.mencari_semua_url_pertemuan_dimatkul(url_matkul)
-
         except Exception as e:
             print("error", e)
             self.logout_elearning()
