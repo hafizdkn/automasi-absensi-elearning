@@ -261,6 +261,7 @@ class Elearning(Notifikasi):
                         super().notif_wa(self.nomer_hp, format_pesan)
                         return True
             print("Tidak ditemukan kata Present atau Hadir saat mau submit,cek ulang kata kehadiran dan informasikan ke admin untuk memperbaharui!")
+            return None
 
 
 class JadwalMataKuliah(Elearning):
