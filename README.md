@@ -4,7 +4,6 @@ Alat untuk mempermudah absensi di elearning Asia https://e-learning.asia.ac.id/
 ## Fitur kedepan 
 - [ ] Logging 
 - [ ] Membaca jadwal mata kuliah lewat file .xlsx
-- [ ] Multi threading untuk penyesuaian absensi mata kuliah yg berbeda jam
 
 ## Installasi Kebutuhan
 ```
